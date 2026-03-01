@@ -1,5 +1,10 @@
-streamlit
-torch
-numpy
-pandas
-anyio
+streamlit==1.26.0
+requests==2.31.0
+fastapi==0.111.0
+uvicorn==0.25.0
+pymongo==5.4.0
+python-dotenv==1.0.0
+sentence-transformers==2.2.2
+transformers==4.36.0
+torch==2.2.0
+numpy==1.26.0
