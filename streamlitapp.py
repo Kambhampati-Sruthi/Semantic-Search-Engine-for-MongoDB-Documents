@@ -25,10 +25,14 @@ if "logged_in" not in st.session_state:
 if not st.session_state.logged_in:
     st.markdown(
         """
-        <h2 style='text-align:center; color:#4B8BBE;'>🔐 Semantic Search Login</h2>
+        <div style='text-align:center; padding:30px; background-color:#f0f2f6; border-radius:15px;'>
+            <h2 style='color:#4B8BBE;'>🔐 Semantic Search Login</h2>
+            <p style='font-size:16px;'>Default demo credentials:<br>
+               <strong>Username:</strong> admin<br>
+               <strong>Password:</strong> admin123</p>
+        </div>
         """, unsafe_allow_html=True
     )
-    st.info("Default credentials for demo purposes:\n**Username:** admin\n**Password:** admin123")
 
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
@@ -74,7 +78,7 @@ with tab1:
                 r = requests.post(
                     f"{BACKEND_URL}/add-document",
                     json={"title": title.strip(), "content": content.strip()},
-                    timeout=15
+                    timeout=30
                 )
                 if r.status_code == 200:
                     st.success("✅ Document added successfully")
@@ -98,13 +102,18 @@ with tab2:
             st.warning("Please enter a search query")
             st.stop()
 
-        payload = {"query": query.strip(), "top_k": int(top_k), "threshold": float(threshold)}
+        # FIX: payload matches backend expectation
+        payload = {
+            "query": query.strip(),
+            "top_k": int(top_k),
+            "threshold": float(threshold)
+        }
 
         try:
             r = requests.post(
                 f"{BACKEND_URL}/search",
                 json=payload,
-                timeout=15
+                timeout=30
             )
             if r.status_code != 200:
                 st.error("❌ Backend returned an error")
@@ -124,7 +133,7 @@ with tab2:
                     </div>
                     """, unsafe_allow_html=True)
         except Exception as e:
-            st.error(f"Error: {e}")
+            st.error(f"Error connecting to backend: {e}")
 
 # ==============================
 # STATISTICS
@@ -132,14 +141,14 @@ with tab2:
 with tab3:
     st.subheader("📊 Statistics")
     try:
-        r = requests.get(f"{BACKEND_URL}/stats", timeout=10)
+        r = requests.get(f"{BACKEND_URL}/stats", timeout=30)
         if r.status_code == 200:
             st.json(r.json())
         else:
             st.error("Backend error")
             st.code(r.text)
-    except:
-        st.error("Backend not reachable")
+    except Exception as e:
+        st.error(f"Backend not reachable: {e}")
 
 # ==============================
 # SAMPLE DOCUMENTS
@@ -159,7 +168,7 @@ with tab4:
                 r = requests.post(
                     f"{BACKEND_URL}/add-document",
                     json={"title": title, "content": content},
-                    timeout=10
+                    timeout=30
                 )
                 if r.status_code == 200:
                     st.success(f"✅ Added {title}")
