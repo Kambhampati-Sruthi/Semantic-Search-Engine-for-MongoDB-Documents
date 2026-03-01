@@ -5,6 +5,7 @@ from typing import Optional
 import numpy as np
 import warnings
 from datetime import datetime
+import os
 
 warnings.filterwarnings("ignore")
 
@@ -13,7 +14,12 @@ app = FastAPI(title="Semantic Search Engine")
 # --------------------------------
 # MongoDB Connection
 # --------------------------------
-client = MongoClient("mongodb://localhost:27017/")db = client["semantic_search_db"]
+# Use MONGODB_URI from environment (Atlas on Render) or fallback to localhost for local testing
+mongo_uri = os.environ.get(
+    "MONGODB_URI", "mongodb://localhost:27017/semantic_search_db"
+)
+client = MongoClient(mongo_uri)
+db = client["semantic_search_db"]
 collection = db["documents"]
 
 # --------------------------------
@@ -31,13 +37,13 @@ def home():
         "endpoints": {
             "Add Document": "/add-document",
             "Semantic Search": "/search",
-            "Stats": "/stats"
+            "Stats": "/stats",
+            "Delete Document": "/delete"
         }
     }
 
 # --------------------------------
 # ADD DOCUMENT API
-# ADVANCEMENT 1: Validation + Metadata
 # --------------------------------
 @app.post("/add-document")
 def add_document(doc: dict):
@@ -64,7 +70,6 @@ def add_document(doc: dict):
 
 # --------------------------------
 # SEMANTIC SEARCH API
-# ADVANCEMENT 2: top_k + threshold + category filter
 # --------------------------------
 @app.post("/search")
 def search(data: dict):
@@ -101,7 +106,7 @@ def search(data: dict):
     return results[:top_k]
 
 # --------------------------------
-# ADVANCEMENT 3: SEARCH STATISTICS
+# SEARCH STATISTICS
 # --------------------------------
 @app.get("/stats")
 def stats():
@@ -114,7 +119,7 @@ def stats():
     }
 
 # --------------------------------
-# ADVANCEMENT 4: DELETE DOCUMENT
+# DELETE DOCUMENT
 # --------------------------------
 @app.delete("/delete")
 def delete_document(title: str):
