@@ -1,0 +1,7 @@
+POST http://localhost:8000/add-document
+Content-Type: application/json
+
+{
+  "title": "Data Science",
+  "content": "Data science combines statistics, programming and machine learning"
+}
