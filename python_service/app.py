@@ -13,9 +13,7 @@ app = FastAPI(title="Semantic Search Engine")
 # --------------------------------
 # MongoDB Connection
 # --------------------------------
-client = MongoClient("[default]
-MONGODB_URI = "mongodb+srv://kambhampatisruthi_db_user:sruthi@cluster0.etus5oc.mongodb.net/semantic_search?retryWrites=true&w=majority"")
-db = client["semantic_search_db"]
+client = MongoClient("mongodb://localhost:27017/")db = client["semantic_search_db"]
 collection = db["documents"]
 
 # --------------------------------
