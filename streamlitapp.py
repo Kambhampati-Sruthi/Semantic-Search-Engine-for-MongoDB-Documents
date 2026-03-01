@@ -5,7 +5,7 @@ import json
 # ==============================
 # CONFIG
 # ==============================
-BACKEND_URL = "http://127.0.0.1:8000"
+BACKEND_URL = "https://semantic-search-engine-backend.onrender.com"  # <- your Render backend URL
 
 st.set_page_config(
     page_title="Semantic Search Engine",
@@ -20,21 +20,25 @@ if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
 # ==============================
-# LOGIN (DEMO)
+# LOGIN PAGE
 # ==============================
 if not st.session_state.logged_in:
-    st.markdown("<h2 style='text-align:center;'>🔐 Login</h2>", unsafe_allow_html=True)
+    st.markdown("""
+        <div style="max-width:400px; margin:auto; padding:30px; border:1px solid #ddd; border-radius:15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); text-align:center;">
+            <h2>🔐 Login</h2>
+    """, unsafe_allow_html=True)
 
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
 
     if st.button("Login"):
-        if username == "admin" and password == "admin123":
+        if username == "admin" and password == "admin123":  # Default credentials
             st.session_state.logged_in = True
-            st.success("Login successful. Please refresh once.")
+            st.success("Login successful! Refresh the page if needed.")
         else:
             st.error("Invalid credentials")
 
+    st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
 # ==============================
@@ -69,24 +73,19 @@ with tab1:
             try:
                 r = requests.post(
                     f"{BACKEND_URL}/add-document",
-                    json={
-                        "title": title.strip(),
-                        "content": content.strip()
-                    },
+                    json={"title": title.strip(), "content": content.strip()},
                     timeout=15
                 )
-
                 if r.status_code == 200:
                     st.success("✅ Document added successfully")
                 else:
                     st.error("❌ Backend error")
                     st.code(r.text)
-
             except Exception as e:
                 st.error(f"Backend not reachable: {e}")
 
 # ==============================
-# SEARCH (FIXED)
+# SEARCH
 # ==============================
 with tab2:
     st.subheader("🔎 Semantic Search")
@@ -95,7 +94,6 @@ with tab2:
         "Search Query",
         placeholder="e.g. Artificial Intelligence"
     )
-
     top_k = st.slider("Top Results", 1, 10, 5)
     threshold = st.slider("Similarity Threshold", 0.0, 1.0, 0.3)
 
@@ -104,34 +102,25 @@ with tab2:
             st.warning("Please enter a search query")
             st.stop()
 
-        # 🔑 FIX: wrap user text into backend-expected JSON STRING
-        backend_query = json.dumps({
-            "query": query.strip(),
-            "top_k": int(top_k),
-            "threshold": float(threshold)
-        })
-
         payload = {
-            "query": backend_query
+            "query": json.dumps({
+                "query": query.strip(),
+                "top_k": int(top_k),
+                "threshold": float(threshold)
+            })
         }
 
         st.caption("🔧 Debug: Payload Sent")
         st.code(payload)
 
         try:
-            r = requests.post(
-                f"{BACKEND_URL}/search",
-                json=payload,
-                timeout=15
-            )
-
+            r = requests.post(f"{BACKEND_URL}/search", json=payload, timeout=15)
             if r.status_code != 200:
                 st.error("❌ Backend returned an error")
                 st.code(r.text)
                 st.stop()
 
             results = r.json()
-
             if not results:
                 st.info("No results found")
             else:
@@ -143,9 +132,6 @@ with tab2:
                         <small>Similarity: {res.get('score',0):.2f}</small>
                     </div>
                     """, unsafe_allow_html=True)
-
-        except requests.exceptions.JSONDecodeError:
-            st.error("Backend returned invalid JSON")
         except Exception as e:
             st.error(f"Error: {e}")
 
@@ -154,7 +140,6 @@ with tab2:
 # ==============================
 with tab3:
     st.subheader("📊 Statistics")
-
     try:
         r = requests.get(f"{BACKEND_URL}/stats", timeout=10)
         if r.status_code == 200:
@@ -170,7 +155,6 @@ with tab3:
 # ==============================
 with tab4:
     st.subheader("📄 Sample Documents")
-
     samples = [
         ("AI Basics", "Artificial intelligence includes machine learning and deep learning"),
         ("Deep Learning", "Deep learning uses neural networks with many layers"),
@@ -180,11 +164,11 @@ with tab4:
 
     for title, content in samples:
         if st.button(f"Add: {title}", key=title):
-            r = requests.post(
-                f"{BACKEND_URL}/add-document",
-                json={"title": title, "content": content}
-            )
-            if r.status_code == 200:
-                st.success(f"✅ Added {title}")
-            else:
-                st.error("❌ Failed to add document")
+            try:
+                r = requests.post(f"{BACKEND_URL}/add-document", json={"title": title, "content": content})
+                if r.status_code == 200:
+                    st.success(f"✅ Added {title}")
+                else:
+                    st.error("❌ Failed to add document")
+            except:
+                st.error("Backend not reachable")
