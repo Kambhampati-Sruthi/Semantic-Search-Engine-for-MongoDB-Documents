@@ -5,8 +5,7 @@ import json
 # ==============================
 # CONFIG
 # ==============================
-# Replace this with your Render backend URL
-BACKEND_URL = "https://semantic-search-engine-backend.onrender.com"
+BACKEND_URL = "https://semantic-search-engine-for-mongodb-cktf.onrender.com"
 
 st.set_page_config(
     page_title="Semantic Search Engine",
@@ -24,35 +23,12 @@ if "logged_in" not in st.session_state:
 # LOGIN PAGE
 # ==============================
 if not st.session_state.logged_in:
-    st.markdown("""
-    <style>
-    .login-card {
-        max-width: 450px;
-        margin: 80px auto;
-        padding: 40px;
-        border-radius: 15px;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-        text-align: center;
-        background: linear-gradient(to bottom right, #f0f4ff, #d9e2ff);
-    }
-    .login-card h2 {
-        margin-bottom: 20px;
-        color: #333;
-    }
-    .login-info {
-        font-size: 14px;
-        margin-top: 10px;
-        color: #555;
-        background-color: #eef;
-        padding: 8px;
-        border-radius: 5px;
-    }
-    </style>
-    <div class="login-card">
-        <h2>🔐 Welcome to Semantic Search</h2>
-        <p>Use the following credentials:</p>
-        <div class="login-info">Username: <b>admin</b><br>Password: <b>admin123</b></div>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        """
+        <h2 style='text-align:center; color:#4B8BBE;'>🔐 Semantic Search Login</h2>
+        """, unsafe_allow_html=True
+    )
+    st.info("Default credentials for demo purposes:\n**Username:** admin\n**Password:** admin123")
 
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
@@ -60,11 +36,10 @@ if not st.session_state.logged_in:
     if st.button("Login"):
         if username == "admin" and password == "admin123":
             st.session_state.logged_in = True
-            st.success("Login successful! Please refresh the page if needed.")
+            st.success("Login successful! 🎉")
+            st.experimental_rerun()
         else:
-            st.error("Invalid credentials")
-
-    st.markdown("</div>", unsafe_allow_html=True)
+            st.error("❌ Invalid credentials")
     st.stop()
 
 # ==============================
@@ -104,21 +79,17 @@ with tab1:
                 if r.status_code == 200:
                     st.success("✅ Document added successfully")
                 else:
-                    st.error(f"❌ Backend error ({r.status_code})")
+                    st.error("❌ Backend error")
                     st.code(r.text)
             except Exception as e:
-                st.error(f"⚠️ Backend not reachable: {e}")
+                st.error(f"Backend not reachable: {e}")
 
 # ==============================
 # SEARCH
 # ==============================
 with tab2:
     st.subheader("🔎 Semantic Search")
-
-    query = st.text_input(
-        "Search Query",
-        placeholder="e.g. Artificial Intelligence"
-    )
+    query = st.text_input("Search Query", placeholder="e.g. Artificial Intelligence")
     top_k = st.slider("Top Results", 1, 10, 5)
     threshold = st.slider("Similarity Threshold", 0.0, 1.0, 0.3)
 
@@ -127,16 +98,16 @@ with tab2:
             st.warning("Please enter a search query")
             st.stop()
 
-        payload = {"query": json.dumps({
-            "query": query.strip(),
-            "top_k": int(top_k),
-            "threshold": float(threshold)
-        })}
+        payload = {"query": query.strip(), "top_k": int(top_k), "threshold": float(threshold)}
 
         try:
-            r = requests.post(f"{BACKEND_URL}/search", json=payload, timeout=15)
+            r = requests.post(
+                f"{BACKEND_URL}/search",
+                json=payload,
+                timeout=15
+            )
             if r.status_code != 200:
-                st.error(f"❌ Backend error ({r.status_code})")
+                st.error("❌ Backend returned an error")
                 st.code(r.text)
                 st.stop()
 
@@ -146,15 +117,14 @@ with tab2:
             else:
                 for res in results:
                     st.markdown(f"""
-                    <div style="border:1px solid #ddd; padding:15px; border-radius:10px; margin-bottom:10px; background-color:#f9f9f9;">
+                    <div style="border:1px solid #ddd; padding:15px; border-radius:10px; margin-bottom:10px;">
                         <h4>{res.get('title','')}</h4>
                         <p>{res.get('content','')}</p>
                         <small>Similarity: {res.get('score',0):.2f}</small>
                     </div>
                     """, unsafe_allow_html=True)
-
         except Exception as e:
-            st.error(f"⚠️ Backend not reachable: {e}")
+            st.error(f"Error: {e}")
 
 # ==============================
 # STATISTICS
@@ -166,13 +136,13 @@ with tab3:
         if r.status_code == 200:
             st.json(r.json())
         else:
-            st.error(f"❌ Backend error ({r.status_code})")
+            st.error("Backend error")
             st.code(r.text)
     except:
-        st.error("⚠️ Backend not reachable")
+        st.error("Backend not reachable")
 
 # ==============================
-# SAMPLE DOCS
+# SAMPLE DOCUMENTS
 # ==============================
 with tab4:
     st.subheader("📄 Sample Documents")
@@ -186,10 +156,14 @@ with tab4:
     for title, content in samples:
         if st.button(f"Add: {title}", key=title):
             try:
-                r = requests.post(f"{BACKEND_URL}/add-document", json={"title": title, "content": content})
+                r = requests.post(
+                    f"{BACKEND_URL}/add-document",
+                    json={"title": title, "content": content},
+                    timeout=10
+                )
                 if r.status_code == 200:
                     st.success(f"✅ Added {title}")
                 else:
                     st.error("❌ Failed to add document")
-            except:
-                st.error("⚠️ Backend not reachable")
+            except Exception as e:
+                st.error(f"Backend not reachable: {e}")
