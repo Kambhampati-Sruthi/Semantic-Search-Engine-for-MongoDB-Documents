@@ -5,7 +5,8 @@ import json
 # ==============================
 # CONFIG
 # ==============================
-BACKEND_URL = "https://semantic-search-engine-backend.onrender.com"  # <- your Render backend URL
+# Replace this with your Render backend URL
+BACKEND_URL = "https://semantic-search-engine-backend.onrender.com"
 
 st.set_page_config(
     page_title="Semantic Search Engine",
@@ -24,17 +25,42 @@ if "logged_in" not in st.session_state:
 # ==============================
 if not st.session_state.logged_in:
     st.markdown("""
-        <div style="max-width:400px; margin:auto; padding:30px; border:1px solid #ddd; border-radius:15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); text-align:center;">
-            <h2>🔐 Login</h2>
+    <style>
+    .login-card {
+        max-width: 450px;
+        margin: 80px auto;
+        padding: 40px;
+        border-radius: 15px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        text-align: center;
+        background: linear-gradient(to bottom right, #f0f4ff, #d9e2ff);
+    }
+    .login-card h2 {
+        margin-bottom: 20px;
+        color: #333;
+    }
+    .login-info {
+        font-size: 14px;
+        margin-top: 10px;
+        color: #555;
+        background-color: #eef;
+        padding: 8px;
+        border-radius: 5px;
+    }
+    </style>
+    <div class="login-card">
+        <h2>🔐 Welcome to Semantic Search</h2>
+        <p>Use the following credentials:</p>
+        <div class="login-info">Username: <b>admin</b><br>Password: <b>admin123</b></div>
     """, unsafe_allow_html=True)
 
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
 
     if st.button("Login"):
-        if username == "admin" and password == "admin123":  # Default credentials
+        if username == "admin" and password == "admin123":
             st.session_state.logged_in = True
-            st.success("Login successful! Refresh the page if needed.")
+            st.success("Login successful! Please refresh the page if needed.")
         else:
             st.error("Invalid credentials")
 
@@ -62,7 +88,6 @@ tab1, tab2, tab3, tab4 = st.tabs(
 # ==============================
 with tab1:
     st.subheader("➕ Add Document")
-
     title = st.text_input("Document Title")
     content = st.text_area("Document Content", height=200)
 
@@ -79,10 +104,10 @@ with tab1:
                 if r.status_code == 200:
                     st.success("✅ Document added successfully")
                 else:
-                    st.error("❌ Backend error")
+                    st.error(f"❌ Backend error ({r.status_code})")
                     st.code(r.text)
             except Exception as e:
-                st.error(f"Backend not reachable: {e}")
+                st.error(f"⚠️ Backend not reachable: {e}")
 
 # ==============================
 # SEARCH
@@ -102,21 +127,16 @@ with tab2:
             st.warning("Please enter a search query")
             st.stop()
 
-        payload = {
-            "query": json.dumps({
-                "query": query.strip(),
-                "top_k": int(top_k),
-                "threshold": float(threshold)
-            })
-        }
-
-        st.caption("🔧 Debug: Payload Sent")
-        st.code(payload)
+        payload = {"query": json.dumps({
+            "query": query.strip(),
+            "top_k": int(top_k),
+            "threshold": float(threshold)
+        })}
 
         try:
             r = requests.post(f"{BACKEND_URL}/search", json=payload, timeout=15)
             if r.status_code != 200:
-                st.error("❌ Backend returned an error")
+                st.error(f"❌ Backend error ({r.status_code})")
                 st.code(r.text)
                 st.stop()
 
@@ -126,14 +146,15 @@ with tab2:
             else:
                 for res in results:
                     st.markdown(f"""
-                    <div style="border:1px solid #ddd; padding:15px; border-radius:10px; margin-bottom:10px;">
+                    <div style="border:1px solid #ddd; padding:15px; border-radius:10px; margin-bottom:10px; background-color:#f9f9f9;">
                         <h4>{res.get('title','')}</h4>
                         <p>{res.get('content','')}</p>
                         <small>Similarity: {res.get('score',0):.2f}</small>
                     </div>
                     """, unsafe_allow_html=True)
+
         except Exception as e:
-            st.error(f"Error: {e}")
+            st.error(f"⚠️ Backend not reachable: {e}")
 
 # ==============================
 # STATISTICS
@@ -145,10 +166,10 @@ with tab3:
         if r.status_code == 200:
             st.json(r.json())
         else:
-            st.error("Backend error")
+            st.error(f"❌ Backend error ({r.status_code})")
             st.code(r.text)
     except:
-        st.error("Backend not reachable")
+        st.error("⚠️ Backend not reachable")
 
 # ==============================
 # SAMPLE DOCS
@@ -171,4 +192,4 @@ with tab4:
                 else:
                     st.error("❌ Failed to add document")
             except:
-                st.error("Backend not reachable")
+                st.error("⚠️ Backend not reachable")
