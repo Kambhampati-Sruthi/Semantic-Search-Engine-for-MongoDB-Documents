@@ -1,6 +1,6 @@
-streamlit
-requests
-torch
-numpy
-pandas
-scikit-learn
+streamlit==1.28.0
+pymongo
+python-dotenv
+langchain
+sentence-transformers
+tiktoken
